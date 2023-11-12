@@ -571,8 +571,8 @@ macOS 14 (Sonoma) 存在[一个问题](https://github.com/hwdsl2/setup-ipsec-vpn
      phase2alg=aes256-sha2_256,aes_gcm-null,aes128-sha1,aes256-sha1,aes128-sha2,aes256-sha2
    ```
 1. 在同一个文件 `/etc/ipsec.d/ikev2.conf` 中，将 `pfs=no` 替换为 `pfs=yes`。
-1. 保存文件并运行 `sudo service ipsec restart`。
-1. 在生成的 `.mobileconfig` 客户端配置文件中，找到以下部分并将其替换为这些新值：
+1. 保存文件并运行 `service ipsec restart`。
+1. 编辑 VPN 服务器上的 `/opt/src/ikev2.sh`。找到以下部分并将其替换为这些新值：
    ```
            <key>ChildSecurityAssociationParameters</key>
            <dict>
@@ -603,7 +603,10 @@ macOS 14 (Sonoma) 存在[一个问题](https://github.com/hwdsl2/setup-ipsec-vpn
              <integer>1410</integer>
            </dict>
    ```
-1. 从你的 Mac 计算机中移除之前导入的 IKEv2 配置文件（如果有），然后导入编辑后的 `.mobileconfig` 文件。参见[配置 IKEv2 VPN 客户端 - macOS](#os-x-macos)。
+1. 运行 `sudo ikev2.sh` 为你的每个 macOS 和 iOS (iPhone/iPad) 设备导出（或添加）更新后的客户端配置文件。
+1. 从你的 macOS 和 iOS 设备中移除之前导入的 IKEv2 配置文件（如果有），然后导入更新后的 `.mobileconfig` 文件。请参阅[配置 IKEv2 VPN 客户端](#configure-ikev2-vpn-clients)。
+
+**注：** 更新后的 VPN 服务器配置可能不适用于 Windows 或 Android 客户端。对于这些客户端，你可能需要在 `ikev2.conf` 中将 `pfs=yes` 更改回 `pfs=no`，然后运行 `service ipsec restart`。
 
 ### 无法连接多个 IKEv2 客户端
 
