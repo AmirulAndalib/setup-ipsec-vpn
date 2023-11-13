@@ -142,7 +142,7 @@ Libreswan 支持通过使用 RSA 签名算法的 X.509 Machine Certificates 来�
 
 [[支持者] **屏幕录影：** 在 macOS 上导入 IKEv2 配置并连接](https://ko-fi.com/post/Support-this-project-and-get-access-to-supporter-o-X8X5FVFZC)
 
-**注：** macOS 14 (Sonoma) 存在一个问题，可能会导致 IKEv2 VPN 每 24-48 分钟断开连接。有关详细信息和解决方法，请参阅 [macOS Sonoma 客户端断开连接](#macos-sonoma-客户端断开连接)。
+**注：** macOS 14 (Sonoma) 存在一个问题，可能会导致 IKEv2 VPN 每 24-48 分钟断开连接。其他 macOS 版本不受影响。首先[检查你的 macOS 版本](https://support.apple.com/zh-cn/HT201260)。有关详细信息和解决方法，请参阅 [macOS Sonoma 客户端断开连接](#macos-sonoma-客户端断开连接)。
 
 首先，将生成的 `.mobileconfig` 文件安全地传送到你的 Mac，然后双击并按提示操作，以导入为 macOS 配置描述文件。如果你的 Mac 运行 macOS Big Sur 或更新版本，打开系统偏好设置并转到描述文件部分以完成导入。对于 macOS Ventura 和更新版本，打开系统设置并搜索描述文件。在完成之后，检查并确保 "IKEv2 VPN" 显示在系统偏好设置 -> 描述文件中。
 
@@ -563,15 +563,15 @@ sudo chmod 600 ca.cer client.cer client.key
 
 ### macOS Sonoma 客户端断开连接
 
-macOS 14 (Sonoma) 存在[一个问题](https://github.com/hwdsl2/setup-ipsec-vpn/issues/1486)，可能会导致 IKEv2 VPN 每 24-48 分钟断开连接。要解决此问题：
+macOS 14 (Sonoma) 存在[一个问题](https://github.com/hwdsl2/setup-ipsec-vpn/issues/1486)，可能会导致 IKEv2 VPN 每 24-48 分钟断开连接。其他 macOS 版本不受影响。要解决此问题：
 
-1. 编辑 VPN 服务器上的 `/etc/ipsec.d/ikev2.conf`。找到这些行 `ike=...` 和 `phase2alg=...`，并将它们替换为以下内容，开头必须空两格：
+1. 编辑 VPN 服务器上的 `/etc/ipsec.d/ikev2.conf`。首先将 `pfs=no` 替换为 `pfs=yes`。然后找到这些行 `ike=...` 和 `phase2alg=...`，并将它们替换为以下内容，开头必须空两格：
    ```
      ike=aes256-sha2_256;dh19,aes256-sha2,aes128-sha2,aes256-sha1,aes128-sha1
      phase2alg=aes256-sha2_256,aes_gcm-null,aes128-sha1,aes256-sha1,aes128-sha2,aes256-sha2
    ```
-1. 在同一个文件 `/etc/ipsec.d/ikev2.conf` 中，将 `pfs=no` 替换为 `pfs=yes`。
-1. 保存文件并运行 `service ipsec restart`。
+   **注：** Docker 用户需要首先[在容器中运行 Bash shell](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/docs/advanced-usage-zh.md#在容器中运行-bash-shell)。
+1. 保存文件并运行 `service ipsec restart`。Docker 用户：在下面的第 4 步之后退出 (`exit`) 容器并运行 `docker restart ipsec-vpn-server`。
 1. 编辑 VPN 服务器上的 `/opt/src/ikev2.sh`。找到以下部分并将其替换为这些新值：
    ```
            <key>ChildSecurityAssociationParameters</key>
@@ -604,9 +604,9 @@ macOS 14 (Sonoma) 存在[一个问题](https://github.com/hwdsl2/setup-ipsec-vpn
            </dict>
    ```
 1. 运行 `sudo ikev2.sh` 为你的每个 macOS 和 iOS (iPhone/iPad) 设备导出（或添加）更新后的客户端配置文件。
-1. 从你的 macOS 和 iOS 设备中移除之前导入的 IKEv2 配置文件（如果有），然后导入更新后的 `.mobileconfig` 文件。请参阅[配置 IKEv2 VPN 客户端](#configure-ikev2-vpn-clients)。
+1. 从你的 macOS 和 iOS 设备中移除之前导入的 IKEv2 配置文件（如果有），然后导入更新后的 `.mobileconfig` 文件。请参阅[配置 IKEv2 VPN 客户端](#configure-ikev2-vpn-clients)。Docker 用户请看[配置并使用 IKEv2 VPN](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README-zh.md#配置并使用-ikev2-vpn)。
 
-**注：** 更新后的 VPN 服务器配置可能不适用于 Windows 或 Android 客户端。对于这些客户端，你可能需要在 `ikev2.conf` 中将 `pfs=yes` 更改回 `pfs=no`，然后运行 `service ipsec restart`。
+**注：** 更新后的 VPN 服务器配置可能不适用于 Windows 或 Android 客户端。对于这些客户端，你可能需要在 `ikev2.conf` 中将 `pfs=yes` 更改回 `pfs=no`，然后运行 `service ipsec restart` 或重启 Docker 容器。
 
 ### 无法连接多个 IKEv2 客户端
 
